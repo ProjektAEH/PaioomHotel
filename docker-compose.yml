@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  guests:
+    build: ./guests
+    ports:
+      - "5001:5000"
+    depends_on:
+      - coordinator
+    environment:
+      - COORDINATOR_URL=http://coordinator:5000
+
+  rooms:
+    build: ./rooms
+    ports:
+      - "5002:5000"
+    depends_on:
+      - coordinator
+    environment:
+      - COORDINATOR_URL=http://coordinator:5000
+
+  coordinator:
+    build: ./coordinator
+    ports:
+      - "5000:5000"
+    environment:
+      - GUESTS_URL=http://guests:5000
+      - ROOMS_URL=http://rooms:5000
