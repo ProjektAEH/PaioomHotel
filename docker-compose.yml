@@ -2,25 +2,25 @@ version: '3.8'
 
 services:
   guests:
-    build: ./guests
+    build: ./guest-service
     ports:
       - "5001:5000"
     depends_on:
-      - coordinator
+      - main
     environment:
-      - COORDINATOR_URL=http://coordinator:5000
+      - MAIN_URL=http://main:5000
 
   rooms:
-    build: ./rooms
+    build: ./room-service
     ports:
       - "5002:5000"
     depends_on:
-      - coordinator
+      - main
     environment:
-      - COORDINATOR_URL=http://coordinator:5000
+      - MAIN_URL=http://main:5000
 
-  coordinator:
-    build: ./coordinator
+  main:
+    build: ./main
     ports:
       - "5000:5000"
     environment:
