@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   guests:
     build: ./guest-service
@@ -9,6 +7,7 @@ services:
       - main
     environment:
       - MAIN_URL=http://main:5000
+    restart: on-failure
 
   rooms:
     build: ./room-service
@@ -26,3 +25,8 @@ services:
     environment:
       - GUESTS_URL=http://guests:5000
       - ROOMS_URL=http://rooms:5000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5

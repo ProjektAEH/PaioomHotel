@@ -1,44 +1,37 @@
 from flask import Flask, jsonify, request
+import os
+import requests
 
 app = Flask(__name__)
 
+# Store guests
 guests = []
 
-@app.route('/guests/book', methods=['POST'])
-def book_guest_room():
-    guest_id = request.json.get('guest_id')
-    room_id = request.json.get('room_id')
-    
-    for guest in guests:
-        if guest['guest_id'] == guest_id:
-            guest.setdefault('booked_rooms', []).append(room_id)
-            return jsonify({"message": f"Room {room_id} booked for guest {guest_id}!"}), 200
-    return jsonify({"message": "Guest not found."}), 404
+# URL to the rooms service
+rooms_url = os.getenv("ROOMS_URL", "http://rooms:5000")
 
-@app.route('/guests/<int:guest_id>', methods=['PUT'])
-def update_guest(guest_id):
-    updated_guest = request.json
-    for guest in guests:
-        if guest['guest_id'] == guest_id:
-            guest.update(updated_guest)
-            return jsonify(guest), 200
-    return jsonify({"message": "Guest not found."}), 404
-
-@app.route('/guests/<int:guest_id>', methods=['DELETE'])
-def delete_guest(guest_id):
-    global guests
-    guests = [guest for guest in guests if guest['guest_id'] != guest_id]
-    return jsonify({"message": "Guest deleted successfully."}), 200
-
-@app.route('/guests', methods=['GET']) 
+@app.route('/guests', methods=['GET'])
 def get_guests():
     return jsonify(guests)
 
 @app.route('/guests', methods=['POST'])
 def add_guest():
-    guest = request.json
-    guests.append(guest)
-    return jsonify(guest), 201
+    data = request.json
+    room_id = data.get("room_id")
+    guest_name = data.get("guest_name")
+
+    # Check if the room exists and is available
+    room_response = requests.get(f"{rooms_url}/rooms/{room_id}")
+    if room_response.status_code == 200:
+        room = room_response.json()
+        if room["available"]:
+            guest = {"guest_name": guest_name, "room_id": room_id}
+            guests.append(guest)
+            return jsonify(guest), 201
+        else:
+            return jsonify({"error": "Room is not available"}), 400
+    else:
+        return jsonify({"error": "Room not found"}), 404
 
 if __name__ == '__main__':
-    app.run(port=5001)
+    app.run(host='0.0.0.0', port=5000)

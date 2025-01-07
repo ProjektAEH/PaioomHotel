@@ -1,4 +1,4 @@
-FROM python:3.8
+FROM python:3.9-slim
 
 # Set the working directory
 WORKDIR /app
@@ -8,6 +8,9 @@ RUN pip install flask requests
 
 # Copy the application files
 COPY . .
+
+# Ustawienie portu, na którym serwis będzie nasłuchiwać
+EXPOSE 5000
 
 # Command to run the application
 CMD ["python", "app.py"]

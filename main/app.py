@@ -1,37 +1,33 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify
+import os
 import requests
 
 app = Flask(__name__)
 
-# Room Service URL
-ROOM_SERVICE_URL = 'http://rooms:5002'
-# Guest Service URL
-GUEST_SERVICE_URL = 'http://guests:5001'
+# URL to the guests and rooms services
+guests_url = os.getenv("GUESTS_URL", "http://guests:5000")
+rooms_url = os.getenv("ROOMS_URL", "http://rooms:5000")
 
-# Room Service Endpoints
-@app.route('/rooms', methods=['GET'])
-def get_rooms():
-    response = requests.get(f"{ROOM_SERVICE_URL}/rooms")
-    return jsonify(response.json()), response.status_code
+@app.route('/status')
+def status():
+    # Check the status of the guests and rooms services
+    guests_response = requests.get(f"{guests_url}/guests")
+    rooms_response = requests.get(f"{rooms_url}/rooms")
+    
+    if guests_response.status_code == 200 and rooms_response.status_code == 200:
+        return jsonify({"status": "all services are running"})
+    else:
+        return jsonify({"status": "some services are down"}), 500
 
-@app.route('/rooms/book', methods=['POST'])
-def book_room():
-    room_id = request.json.get('room_id')
-    response = requests.post(f"{ROOM_SERVICE_URL}/rooms/book", json={"room_id": room_id})
-    return jsonify(response.json()), response.status_code
-
-# Guest Service Endpoints
-@app.route('/guests', methods=['GET'])
+@app.route('/guests')
 def get_guests():
-    response = requests.get(f"{GUEST_SERVICE_URL}/guests")
-    return jsonify(response.json()), response.status_code
+    response = requests.get(f"{guests_url}/guests")
+    return response.json()
 
-@app.route('/guests/book', methods=['POST'])
-def book_guest_room():
-    guest_id = request.json.get('guest_id')
-    room_id = request.json.get('room_id')
-    response = requests.post(f"{GUEST_SERVICE_URL}/guests/book", json={"guest_id": guest_id, "room_id": room_id})
-    return jsonify(response.json()), response.status_code
+@app.route('/rooms')
+def get_rooms():
+    response = requests.get(f"{rooms_url}/rooms")
+    return response.json()
 
 if __name__ == '__main__':
-    app.run(port=5000)
+    app.run(host='0.0.0.0', port=5000)
